@@ -21,6 +21,7 @@ main {
   padding-right: 5px;
   overflow-x: auto;
   overflow-y : hidden;
+  margin-bottom: 10px;
 }
 
 table {
