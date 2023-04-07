@@ -1,0 +1,52 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+
+  /*outline: 1px solid limegreen;*/
+  /*background: rgb(0 100 0 / 0.05);*/
+}
+
+main {
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+h2 {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+main {
+  max-width: 100%;
+  width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+  width: 20%;
+  font-weight: normal;
+}
+
+
+.ideal {
+  background: lightgreen;
+}
+
+.acceptable {
+  background: lightyellow;
+}
+
+.blocker {
+  background: lightsalmon;
+}
