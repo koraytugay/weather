@@ -105,3 +105,25 @@ function getRow(data) {
 
   return row;
 }
+
+// Schedule page refresh at 1 minute past the next hour
+function scheduleRefresh() {
+  const now = new Date();
+  const currentHour = now.getHours();
+  let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), currentHour, 1, 0, 0);
+
+  if (target <= now) {
+    target.setHours(target.getHours() + 1);
+    target.setMinutes(1);
+    target.setSeconds(0);
+    target.setMilliseconds(0);
+  }
+
+  const delay = target - now;
+
+  setTimeout(() => {
+    location.reload();
+  }, delay);
+}
+
+scheduleRefresh();
