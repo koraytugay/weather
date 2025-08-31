@@ -3,8 +3,11 @@ const weatherObj = await fetchWeather();
 // Thresholds for classification
 const THRESHOLDS = {
   temp: { ideal: [2, 25], acceptable: [-5, 2] }, // < -5 = blocker
+  feelsLike: { ideal: [2, 25], acceptable: [-5, 2] }, // adjust as desired
   wind: { ideal: [0, 14], acceptable: [14, 17] }, // > 17 = blocker
   cloud: { ideal: [0, 50], acceptable: [50, 100] },
+  precipitationProb: { ideal: [0, 20], acceptable: [20, 30] }, // >60 = blocker
+  humidity: { ideal: [0, 60], acceptable: [60, 80] }, // >80 = blocker
 };
 
 function classify(value, { ideal, acceptable }) {
@@ -88,16 +91,16 @@ function getRow(data) {
   row.appendChild(makeCell(`${data.temp}°`, classify(data.temp, THRESHOLDS.temp)));
 
   // Feels like
-  row.appendChild(makeCell(`${data.feelsLike}°`, classify(data.feelsLike, THRESHOLDS.temp)));
+  row.appendChild(makeCell(`${data.feelsLike}°`, classify(data.feelsLike, THRESHOLDS.feelsLike)));
 
   // Precipitation Probability
-  row.appendChild(makeCell(`${data.precipitationProb}%`, data.precipitationProb < 30 ? "ideal" : data.precipitationProb < 60 ? "acceptable" : "blocker"));
+  row.appendChild(makeCell(`${data.precipitationProb}%`, classify(data.precipitationProb, THRESHOLDS.precipitationProb)));
 
   // Wind
   row.appendChild(makeCell(`${data.wind}`, classify(data.wind, THRESHOLDS.wind)));
 
   // Humidity
-  row.appendChild(makeCell(`${data.humidity}%`, data.humidity < 60 ? "ideal" : data.humidity < 80 ? "acceptable" : "blocker"));
+  row.appendChild(makeCell(`${data.humidity}%`, classify(data.humidity, THRESHOLDS.humidity)));
 
   if (blockerExists) {
     row.classList.add("blocker-row");
@@ -105,25 +108,3 @@ function getRow(data) {
 
   return row;
 }
-
-// Schedule page refresh at 1 minute past the next hour
-function scheduleRefresh() {
-  const now = new Date();
-  const currentHour = now.getHours();
-  let target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), currentHour, 1, 0, 0);
-
-  if (target <= now) {
-    target.setHours(target.getHours() + 1);
-    target.setMinutes(1);
-    target.setSeconds(0);
-    target.setMilliseconds(0);
-  }
-
-  const delay = target - now;
-
-  setTimeout(() => {
-    location.reload();
-  }, delay);
-}
-
-scheduleRefresh();

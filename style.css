@@ -6,8 +6,8 @@
 }
 
 body {
-  background: #f8f9fa;
-  color: #222;
+  background: #121212; /* dark background */
+  color: #e0e0e0;      /* light text */
   line-height: 1.5;
 }
 
@@ -15,7 +15,7 @@ h2 {
   margin: 24px 0 12px;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #333;
+  color: #f5f5f5;
   text-align: center;
 }
 
@@ -31,49 +31,49 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
-  background: #fff;
+  background: #1e1e1e; /* dark table background */
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5); /* slightly stronger shadow */
   margin-bottom: 30px;
 }
 
 thead {
-  background: #f1f3f5;
+  background: #2c2c2c; /* dark header */
 }
 
 th, td {
   padding: 10px;
   text-align: center;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #333; /* subtle divider */
 }
 
 tbody tr:nth-child(even) {
-  background: #fafafa;
+  background: #1a1a1a; /* alternating row color */
 }
 
 th {
   font-weight: 600;
-  color: #444;
+  color: #f0f0f0;
 }
 
 /* Status colors */
 .ideal {
-  background: #d4f8d4; /* soft green */
-  color: #0b5127;
+  background: #2a4d2a; /* dark green */
+  color: #b6f7b6;
 }
 
 .acceptable {
-  background: #fff9c4; /* soft yellow */
-  color: #665c00;
+  background: #4a4a1f; /* dark yellow/olive */
+  color: #fff79c;
 }
 
 .blocker {
-  background: #ffcdd2; /* soft red */
-  color: #8a1c1c;
+  background: #662222; /* dark red */
+  color: #ffbcbc;
 }
 
 /* Highlight entire row if critical blocker */
 .blocker-row td {
-  background: #ffcdd2; /* soft red */
+  background: #662222; /* dark red */
 }
