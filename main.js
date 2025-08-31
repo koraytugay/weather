@@ -1,94 +1,107 @@
 const weatherObj = await fetchWeather();
 
+// Thresholds for classification
+const THRESHOLDS = {
+  temp: { ideal: [2, 25], acceptable: [-5, 2] }, // < -5 = blocker
+  wind: { ideal: [0, 14], acceptable: [14, 17] }, // > 17 = blocker
+  cloud: { ideal: [0, 50], acceptable: [50, 100] },
+};
+
+function classify(value, { ideal, acceptable }) {
+  if (value < ideal[0] || value > ideal[1]) {
+    if (acceptable && value >= acceptable[0] && value <= acceptable[1])
+      return "acceptable";
+    return "blocker";
+  }
+  return "ideal";
+}
+
 async function fetchWeather() {
-  return fetch(
-      "https://api.open-meteo.com/v1/forecast?forecast_days=2&latitude=43.70&longitude=-79.42&hourly=temperature_2m,precipitation,windspeed_10m,cloudcover&daily=temperature_2m_max,temperature_2m_min&timezone=America%2FNew_York")
-  .then(value => value.json());
+  const url =
+      "https://api.open-meteo.com/v1/forecast?" +
+      "forecast_days=2&latitude=43.70&longitude=-79.42" +
+      "&hourly=temperature_2m,apparent_temperature,precipitation,precipitation_probability,relative_humidity_2m,windspeed_10m,cloudcover,uv_index" +
+      "&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset" +
+      "&timezone=America%2FNew_York";
+
+  const response = await fetch(url);
+  return await response.json();
 }
 
-let todaysData = [];
-let tomorrowsData = [];
-
-for (let i = new Date().getHours(); i <= 47; i++) {
-  const arr = i <= 23 ? todaysData : tomorrowsData;
-  const hourly = weatherObj.hourly;
-  const data = {
-    hours: new Date(hourly.time[i]).toLocaleString('en-US',
-        {hour: 'numeric', minute: 'numeric', hour12: false}),
-    precipitation: hourly.precipitation[i],
-    temp: hourly.temperature_2m[i],
-    wind: hourly.windspeed_10m[i],
-    cloudcover: hourly.cloudcover[i],
-  };
-  arr.push(data);
+// Split hours into today and tomorrow
+function splitByDay(hourly) {
+  const today = [];
+  const tomorrow = [];
+  for (let i = new Date().getHours(); i < 48; i++) {
+    const target = i <= 23 ? today : tomorrow;
+    target.push({
+      hours: new Date(hourly.time[i]).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }),
+      temp: hourly.temperature_2m[i],
+      feelsLike: hourly.apparent_temperature[i],
+      precipitation: hourly.precipitation[i],
+      precipitationProb: hourly.precipitation_probability[i],
+      wind: hourly.windspeed_10m[i],
+      cloudcover: hourly.cloudcover[i],
+      humidity: hourly.relative_humidity_2m[i],
+      uv: hourly.uv_index[i],
+    });
+  }
+  return { today, tomorrow };
 }
 
-const tableToday = document.getElementById("today");
+const { today: todaysData, tomorrow: tomorrowsData } = splitByDay(
+    weatherObj.hourly
+);
 
-for (let i = 0; i < todaysData.length; i++) {
-  tableToday.appendChild(getRow(i, todaysData));
+// Fill tables
+fillTable("today", todaysData);
+fillTable("tomorrow", tomorrowsData.slice(6)); // skip early morning tomorrow
+
+function fillTable(id, data) {
+  const tableBody = document.getElementById(id);
+  data.forEach((rowData) => {
+    tableBody.appendChild(getRow(rowData));
+  });
 }
 
-const tableTomorrow = document.getElementById("tomorrow");
 
-for (let i = 6; i < tomorrowsData.length; i++) {
-  tableTomorrow.appendChild(getRow(i, tomorrowsData));
-}
-
-function getRow(i, data) {
+function getRow(data) {
   let blockerExists = false;
+  const row = document.createElement("tr");
 
-  let row = document.createElement("tr");
-
-  let time = document.createElement("td");
-  time.textContent = data[i].hours;
-  row.appendChild(time);
-
-  let temp = document.createElement("td");
-  temp.textContent = data[i].temp;
-  if (data[i].temp < -5) {
-    temp.classList.add("blocker");
-    blockerExists = true;
-  } else if (data[i].temp < 2) {
-    temp.classList.add("acceptable");
-  } else {
-    temp.classList.add("ideal");
+  function makeCell(value, className) {
+    const td = document.createElement("td");
+    td.textContent = value;
+    if (className) td.classList.add(className);
+    if (className === "blocker") blockerExists = true;
+    return td;
   }
 
-  row.appendChild(temp);
+  // Time
+  row.appendChild(makeCell(data.hours));
 
-  let precipitation = document.createElement("td");
-  if (data[i].precipitation === 0) {
-    precipitation.classList.add("ideal");
-  }
-  precipitation.textContent = data[i].precipitation;
-  row.appendChild(precipitation);
+  // Temperature
+  row.appendChild(makeCell(`${data.temp}°`, classify(data.temp, THRESHOLDS.temp)));
 
-  let wind = document.createElement("td");
-  if (data[i].wind <= 14) {
-    wind.classList.add("ideal");
-  } else if (data[i].wind < 17) {
-    wind.classList.add("acceptable");
-  } else {
-    wind.classList.add("blocker");
-    blockerExists = true;
-  }
-  wind.textContent = data[i].wind;
-  row.appendChild(wind);
+  // Feels like
+  row.appendChild(makeCell(`${data.feelsLike}°`, classify(data.feelsLike, THRESHOLDS.temp)));
 
-  let cloudcover = document.createElement("td");
-  cloudcover.textContent = data[i].cloudcover;
-  if (data[i].cloudcover <= 50) {
-    cloudcover.classList.add("ideal");
-  } else if (data[i].cloudcover <= 100) {
-    cloudcover.classList.add("acceptable");
-  }
+  // Precipitation Probability
+  row.appendChild(makeCell(`${data.precipitationProb}%`, data.precipitationProb < 30 ? "ideal" : data.precipitationProb < 60 ? "acceptable" : "blocker"));
 
+  // Wind
+  row.appendChild(makeCell(`${data.wind}`, classify(data.wind, THRESHOLDS.wind)));
+
+  // Humidity
+  row.appendChild(makeCell(`${data.humidity}%`, data.humidity < 60 ? "ideal" : data.humidity < 80 ? "acceptable" : "blocker"));
 
   if (blockerExists) {
-    time.classList.add("blocker");
+    row.classList.add("blocker-row");
   }
-  row.appendChild(cloudcover);
 
   return row;
 }
